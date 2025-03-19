@@ -1,9 +1,8 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   reactStrictMode: true,
-  swcMinify: true,
   images: {
-    domains: ['localhost', 'tuodominio.com'],
+    domains: ['localhost', 'wikiale.com'],
     remotePatterns: [
       {
         protocol: 'https',
@@ -12,7 +11,7 @@ const nextConfig = {
     ],
   },
   experimental: {
-    serverComponentsExternalPackages: ['@prisma/client', 'bcrypt'],
+    serverExternalPackages: ['@prisma/client', 'bcrypt'],
   },
   async headers() {
     return [
@@ -42,4 +41,3 @@ const nextConfig = {
 };
 
 export default nextConfig;
-
