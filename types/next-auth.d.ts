@@ -8,5 +8,19 @@ declare module "next-auth" {
       subscription?: any
     } & DefaultSession["user"]
   }
+
+  // Estendi anche il tipo User
+  interface User {
+    role?: string
+    subscription?: any
+  }
 }
 
+// Estendi anche il tipo JWT
+declare module "next-auth/jwt" {
+  interface JWT {
+    id: string
+    role?: string
+    subscription?: any
+  }
+}

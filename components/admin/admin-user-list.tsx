@@ -8,7 +8,7 @@ import { Input } from "@/components/ui/input"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
-import { Search, ChevronLeft, ChevronRight, Edit, UserCheck, UserX } from "lucide-react"
+import { Search, ChevronLeft, ChevronRight, Edit, UserCheck, UserX } from 'lucide-react'
 import { formatDate } from "@/lib/utils"
 import { AdminUserDialog } from "@/components/admin/admin-user-dialog"
 
@@ -145,7 +145,7 @@ export function AdminUserList() {
                     </TableCell>
                     <TableCell>
                       {user.emailVerified ? (
-                        <Badge variant="success" className="bg-green-500">
+                        <Badge variant="default" className="bg-green-500 hover:bg-green-600">
                           Verificato
                         </Badge>
                       ) : (
@@ -205,4 +205,3 @@ export function AdminUserList() {
     </Card>
   )
 }
-

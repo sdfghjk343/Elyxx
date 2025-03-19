@@ -11,25 +11,38 @@ import { AdminStats } from "@/components/admin/admin-stats"
 import { AdminSettings } from "@/components/admin/admin-settings"
 import { isAdmin } from "@/lib/utils"
 
+// Disabilita la pre-renderizzazione statica
+export const dynamic = "force-dynamic"
+
 export default function AdminDashboardPage() {
-  const { data: session, status } = useSession()
+  // Evita di eseguire il codice se siamo nel server
+  const isClient = typeof window !== "undefined"
+  const session = isClient ? useSession() : null
   const router = useRouter()
   const [isLoading, setIsLoading] = useState(true)
 
   useEffect(() => {
-    if (status === "loading") return
+    if (!isClient || !session) return
 
-    if (!session || !isAdmin(session.user)) {
+    if (session.status === "unauthenticated" || !session.data?.user || !isAdmin(session.data.user)) {
       router.push("/dashboard")
     } else {
       setIsLoading(false)
     }
-  }, [session, status, router])
+  }, [session, router, isClient])
 
-  if (isLoading) {
+  if (!isClient || isLoading || session?.status === "loading") {
     return (
       <DashboardShell>
-        <DashboardHeader heading="Pannello di Amministrazione" text="Caricamento..." user={session?.user} />
+        <DashboardHeader
+          heading="Pannello di Amministrazione"
+          text="Caricamento..."
+          user={{
+            name: session?.data?.user?.name || "Amministratore",
+            email: session?.data?.user?.email || "admin@example.com",
+            plan: session?.data?.user?.subscription?.planId || "free",
+          }}
+        />
         <div className="flex items-center justify-center h-64">
           <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary"></div>
         </div>
@@ -42,7 +55,11 @@ export default function AdminDashboardPage() {
       <DashboardHeader
         heading="Pannello di Amministrazione"
         text="Gestisci utenti, visualizza statistiche e configura la piattaforma."
-        user={session?.user}
+        user={{
+          name: session?.data?.user?.name || "Amministratore",
+          email: session?.data?.user?.email || "admin@example.com",
+          plan: session?.data?.user?.subscription?.planId || "free",
+        }}
       />
 
       <Tabs defaultValue="stats" className="mt-6">
@@ -64,4 +81,3 @@ export default function AdminDashboardPage() {
     </DashboardShell>
   )
 }
-

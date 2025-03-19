@@ -1,5 +1,5 @@
 import { type NextRequest, NextResponse } from "next/server"
-import { hash } from "bcrypt"
+import { hash } from "bcryptjs" // Cambiato da bcrypt a bcryptjs
 import { db } from "@/lib/db"
 import { sendVerificationEmail } from "@/lib/email"
 import crypto from "crypto"

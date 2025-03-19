@@ -10,9 +10,6 @@ const nextConfig = {
       },
     ],
   },
-  experimental: {
-    serverExternalPackages: ['@prisma/client', 'bcrypt'],
-  },
   async headers() {
     return [
       {
