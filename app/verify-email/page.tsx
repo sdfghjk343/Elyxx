@@ -1,11 +1,9 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { useState, useEffect } from "react"
 import { useRouter, useSearchParams } from "next/navigation"
-import Link from "next/link"
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
-import { CheckCircle, XCircle } from "lucide-react"
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 
 export default function VerifyEmailPage() {
   const router = useRouter()
@@ -27,7 +25,9 @@ export default function VerifyEmailPage() {
       try {
         const response = await fetch("/api/auth/verify-email", {
           method: "POST",
-          headers: { "Content-Type": "application/json" },
+          headers: {
+            "Content-Type": "application/json",
+          },
           body: JSON.stringify({ token }),
         })
 
@@ -38,8 +38,9 @@ export default function VerifyEmailPage() {
         }
 
         setIsSuccess(true)
-      } catch (err) {
-        setError(err instanceof Error ? err.message : "Si è verificato un errore durante la verifica dell'email")
+      } catch (error) {
+        console.error("Errore nella verifica dell'email:", error)
+        setError(error instanceof Error ? error.message : "Errore durante la verifica dell'email")
       } finally {
         setIsVerifying(false)
       }
@@ -49,39 +50,65 @@ export default function VerifyEmailPage() {
   }, [token, router])
 
   return (
-    <div className="flex items-center justify-center min-h-screen bg-gray-50 dark:bg-gray-900 p-4">
+    <div className="flex min-h-screen items-center justify-center bg-gray-50 dark:bg-gray-900 p-4">
       <Card className="w-full max-w-md">
         <CardHeader>
-          <CardTitle className="text-center">Verifica Email</CardTitle>
+          <CardTitle className="text-2xl text-center">Verifica Email</CardTitle>
           <CardDescription className="text-center">
-            {isVerifying ? "Stiamo verificando il tuo indirizzo email..." : ""}
+            {isVerifying
+              ? "Stiamo verificando il tuo indirizzo email..."
+              : isSuccess
+                ? "Il tuo indirizzo email è stato verificato con successo!"
+                : "Si è verificato un problema durante la verifica dell'email."}
           </CardDescription>
         </CardHeader>
-        <CardContent className="flex flex-col items-center justify-center">
+        <CardContent>
           {isVerifying ? (
-            <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary"></div>
+            <div className="flex justify-center py-8">
+              <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary"></div>
+            </div>
           ) : isSuccess ? (
-            <div className="text-center">
-              <CheckCircle className="h-16 w-16 text-green-500 mx-auto mb-4" />
-              <h2 className="text-xl font-semibold mb-2">Email Verificata!</h2>
-              <p className="text-gray-500 dark:text-gray-400">
-                Il tuo indirizzo email è stato verificato con successo. Ora puoi accedere al tuo account.
+            <div className="text-center py-4">
+              <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-green-100 dark:bg-green-900 mb-4">
+                <svg
+                  className="w-8 h-8 text-green-600 dark:text-green-400"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                  xmlns="http://www.w3.org/2000/svg"
+                >
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                </svg>
+              </div>
+              <p className="text-lg">Grazie per aver verificato il tuo indirizzo email!</p>
+              <p className="mt-2 text-muted-foreground">
+                Ora puoi accedere al tuo account e iniziare a utilizzare la piattaforma.
               </p>
             </div>
           ) : (
-            <div className="text-center">
-              <XCircle className="h-16 w-16 text-red-500 mx-auto mb-4" />
-              <h2 className="text-xl font-semibold mb-2">Verifica Fallita</h2>
-              <p className="text-gray-500 dark:text-gray-400">
-                {error || "Non è stato possibile verificare il tuo indirizzo email."}
+            <div className="text-center py-4">
+              <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-red-100 dark:bg-red-900 mb-4">
+                <svg
+                  className="w-8 h-8 text-red-600 dark:text-red-400"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                  xmlns="http://www.w3.org/2000/svg"
+                >
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </div>
+              <p className="text-lg text-red-600 dark:text-red-400">{error}</p>
+              <p className="mt-2 text-muted-foreground">
+                Il link di verifica potrebbe essere scaduto o non valido. Prova a richiedere un nuovo link di verifica.
               </p>
             </div>
           )}
         </CardContent>
         <CardFooter className="flex justify-center">
           {!isVerifying && (
-            <Button asChild>
-              <Link href={isSuccess ? "/login" : "/"}>{isSuccess ? "Vai al Login" : "Torna alla Home"}</Link>
+            <Button onClick={() => router.push(isSuccess ? "/login" : "/register")}>
+              {isSuccess ? "Vai al login" : "Torna alla registrazione"}
             </Button>
           )}
         </CardFooter>

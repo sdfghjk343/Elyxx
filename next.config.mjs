@@ -1,6 +1,7 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   reactStrictMode: true,
+  swcMinify: true,
   images: {
     domains: ['localhost', 'wikiale.com'],
     remotePatterns: [
@@ -9,6 +10,9 @@ const nextConfig = {
         hostname: '**',
       },
     ],
+  },
+  experimental: {
+    serverComponentsExternalPackages: ['@prisma/client'],
   },
   async headers() {
     return [
@@ -38,3 +42,4 @@ const nextConfig = {
 };
 
 export default nextConfig;
+

@@ -1,6 +1,7 @@
 "use client"
 
 import { useState, useEffect } from "react"
+import { useSession } from "next-auth/react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
@@ -10,42 +11,66 @@ import { ChatInterface } from "@/components/chat/chat-interface"
 import { SubscriptionBanner } from "@/components/dashboard/subscription-banner"
 import { UsageStats } from "@/components/dashboard/usage-stats"
 
-// Simuliamo un utente autenticato
-const mockUser = {
-  id: "1",
-  name: "Mario Rossi",
-  email: "mario.rossi@esempio.it",
-  plan: "free", // 'free', 'pro', 'business'
-  usage: {
-    messagesUsed: 15,
-    messagesLimit: 20,
-    imagesGenerated: 0,
-    imagesLimit: 0,
-    filesUploaded: 0,
-    filesLimit: 0,
-  },
-}
+export const dynamic = "force-dynamic"
 
 export default function DashboardPage() {
+  const { data: session, status } = useSession()
+  const [isLoading, setIsLoading] = useState(true)
+
+  // Simuliamo un utente autenticato se necessario
+  const mockUser = {
+    id: "1",
+    name: "Utente",
+    email: "utente@esempio.it",
+    plan: "free",
+    usage: {
+      messagesUsed: 15,
+      messagesLimit: 20,
+      imagesGenerated: 0,
+      imagesLimit: 0,
+      filesUploaded: 0,
+      filesLimit: 0,
+    },
+  }
+
   const [user, setUser] = useState(mockUser)
 
-  // In un'implementazione reale, qui recupereremmo i dati dell'utente
   useEffect(() => {
-    // Simuliamo il recupero dei dati dell'utente
-    const fetchUserData = async () => {
-      // const response = await fetch('/api/user');
-      // const userData = await response.json();
-      // setUser(userData);
+    if (status === "loading") return
+
+    if (status === "authenticated" && session?.user) {
+      console.log("Utente autenticato:", session.user)
+      // Qui potresti caricare i dati reali dell'utente
     }
 
-    // fetchUserData();
-  }, [])
+    setIsLoading(false)
+  }, [session, status])
+
+  if (isLoading) {
+    return (
+      <DashboardShell>
+        <div className="flex items-center justify-center h-64">
+          <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary"></div>
+        </div>
+      </DashboardShell>
+    )
+  }
+
+  // Usa i dati dell'utente dalla sessione se disponibili
+  const userData = session?.user || user
+  const userWithUsage = {
+    ...userData,
+    name: userData.name || mockUser.name,
+    email: userData.email || mockUser.email,
+    plan: userData.plan || mockUser.plan,
+    usage: user.usage, // Manteniamo i dati di utilizzo simulati per ora
+  }
 
   return (
     <DashboardShell>
-      <DashboardHeader heading="Dashboard" text="Benvenuto nella tua dashboard personale." user={user} />
+      <DashboardHeader heading="Dashboard" text="Benvenuto nella tua dashboard personale." user={userWithUsage} />
 
-      {user.plan === "free" && <SubscriptionBanner />}
+      {userWithUsage.plan === "free" && <SubscriptionBanner />}
 
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
         <Card>
@@ -54,14 +79,14 @@ export default function DashboardPage() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">
-              {user.plan === "free"
-                ? `${user.usage.messagesLimit - user.usage.messagesUsed}/${user.usage.messagesLimit}`
+              {userWithUsage.plan === "free"
+                ? `${userWithUsage.usage.messagesLimit - userWithUsage.usage.messagesUsed}/${userWithUsage.usage.messagesLimit}`
                 : "Illimitati"}
             </div>
             <p className="text-xs text-muted-foreground">
-              {user.plan === "free"
+              {userWithUsage.plan === "free"
                 ? "Limite giornaliero"
-                : "Piano " + user.plan.charAt(0).toUpperCase() + user.plan.slice(1)}
+                : "Piano " + userWithUsage.plan.charAt(0).toUpperCase() + userWithUsage.plan.slice(1)}
             </p>
           </CardContent>
         </Card>
@@ -71,16 +96,16 @@ export default function DashboardPage() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">
-              {user.plan === "free"
+              {userWithUsage.plan === "free"
                 ? "Non disponibile"
-                : user.plan === "pro"
-                  ? `${user.usage.imagesGenerated}/10`
+                : userWithUsage.plan === "pro"
+                  ? `${userWithUsage.usage.imagesGenerated}/10`
                   : "Illimitata"}
             </div>
             <p className="text-xs text-muted-foreground">
-              {user.plan === "free"
+              {userWithUsage.plan === "free"
                 ? "Aggiorna per sbloccare"
-                : user.plan === "pro"
+                : userWithUsage.plan === "pro"
                   ? "Limite mensile"
                   : "Piano Business"}
             </p>
@@ -92,12 +117,16 @@ export default function DashboardPage() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">
-              {user.plan === "free" ? "Non disponibile" : user.plan === "pro" ? "10MB max" : "100MB max"}
+              {userWithUsage.plan === "free"
+                ? "Non disponibile"
+                : userWithUsage.plan === "pro"
+                  ? "10MB max"
+                  : "100MB max"}
             </div>
             <p className="text-xs text-muted-foreground">
-              {user.plan === "free"
+              {userWithUsage.plan === "free"
                 ? "Aggiorna per sbloccare"
-                : `Piano ${user.plan.charAt(0).toUpperCase() + user.plan.slice(1)}`}
+                : `Piano ${userWithUsage.plan.charAt(0).toUpperCase() + userWithUsage.plan.slice(1)}`}
             </p>
           </CardContent>
         </Card>
@@ -107,10 +136,10 @@ export default function DashboardPage() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">
-              {user.plan === "free" ? "Free" : user.plan === "pro" ? "Pro" : "Business"}
+              {userWithUsage.plan === "free" ? "Free" : userWithUsage.plan === "pro" ? "Pro" : "Business"}
             </div>
             <p className="text-xs text-muted-foreground">
-              {user.plan === "free" ? "Funzionalità limitate" : "Abbonamento attivo"}
+              {userWithUsage.plan === "free" ? "Funzionalità limitate" : "Abbonamento attivo"}
             </p>
           </CardContent>
         </Card>
@@ -120,18 +149,18 @@ export default function DashboardPage() {
         <TabsList>
           <TabsTrigger value="chat">Chat AI</TabsTrigger>
           <TabsTrigger value="usage">Utilizzo</TabsTrigger>
-          {(user.plan === "pro" || user.plan === "business") && (
+          {(userWithUsage.plan === "pro" || userWithUsage.plan === "business") && (
             <TabsTrigger value="images">Generazione Immagini</TabsTrigger>
           )}
-          {user.plan === "business" && <TabsTrigger value="api">API</TabsTrigger>}
+          {userWithUsage.plan === "business" && <TabsTrigger value="api">API</TabsTrigger>}
         </TabsList>
         <TabsContent value="chat" className="mt-6">
-          <ChatInterface user={user} />
+          <ChatInterface user={userWithUsage} />
         </TabsContent>
         <TabsContent value="usage" className="mt-6">
-          <UsageStats user={user} />
+          <UsageStats user={userWithUsage} />
         </TabsContent>
-        {(user.plan === "pro" || user.plan === "business") && (
+        {(userWithUsage.plan === "pro" || userWithUsage.plan === "business") && (
           <TabsContent value="images" className="mt-6">
             <Card>
               <CardHeader>
@@ -147,7 +176,7 @@ export default function DashboardPage() {
             </Card>
           </TabsContent>
         )}
-        {user.plan === "business" && (
+        {userWithUsage.plan === "business" && (
           <TabsContent value="api" className="mt-6">
             <Card>
               <CardHeader>

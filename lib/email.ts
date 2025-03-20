@@ -6,6 +6,7 @@ let transporter: nodemailer.Transporter
 async function createTestAccount() {
   // Crea un account di test Ethereal per lo sviluppo locale
   const testAccount = await nodemailer.createTestAccount()
+  console.log("Account di test Ethereal creato:", testAccount)
 
   return nodemailer.createTransport({
     host: "smtp.ethereal.email",
@@ -23,6 +24,7 @@ async function getTransporter() {
 
   // Verifica se sono disponibili le credenziali SMTP
   if (process.env.EMAIL_SERVER_HOST && process.env.EMAIL_SERVER_USER && process.env.EMAIL_SERVER_PASSWORD) {
+    console.log("Usando configurazione SMTP da variabili d'ambiente")
     // Configurazione per servizio SMTP
     transporter = nodemailer.createTransport({
       host: process.env.EMAIL_SERVER_HOST,
@@ -34,10 +36,21 @@ async function getTransporter() {
       secure: process.env.EMAIL_SERVER_SECURE === "true",
     })
 
+    // Verifica la connessione
+    try {
+      await transporter.verify()
+      console.log("Connessione SMTP verificata con successo")
+    } catch (error) {
+      console.error("Errore nella verifica della connessione SMTP:", error)
+      console.log("Fallback su account di test Ethereal")
+      transporter = await createTestAccount()
+    }
+
     return transporter
   }
 
   // Fallback su Ethereal per lo sviluppo
+  console.log("Nessuna configurazione SMTP trovata, usando account di test Ethereal")
   transporter = await createTestAccount()
   return transporter
 }
@@ -48,6 +61,8 @@ export async function sendVerificationEmail(email: string, token: string) {
     const baseUrl = process.env.NEXTAUTH_URL || "http://localhost:3000"
     const verificationUrl = `${baseUrl}/verify-email?token=${token}`
     const domain = process.env.DOMAIN_NAME || "AI Platform"
+
+    console.log(`Invio email di verifica a ${email} con URL: ${verificationUrl}`)
 
     const info = await transport.sendMail({
       from: `"${domain}" <${process.env.EMAIL_FROM || "noreply@example.com"}>`,
@@ -69,9 +84,7 @@ export async function sendVerificationEmail(email: string, token: string) {
     })
 
     // Per sviluppo, mostra l'URL di anteprima dell'email
-    if (process.env.NODE_ENV !== "production") {
-      console.log(`Email di verifica inviata: ${nodemailer.getTestMessageUrl(info)}`)
-    }
+    console.log(`Email di verifica inviata: ${nodemailer.getTestMessageUrl(info) || "Email inviata"}`)
 
     return info
   } catch (error) {
@@ -86,6 +99,8 @@ export async function sendWelcomeEmail(email: string, name: string) {
     const transport = await getTransporter()
     const baseUrl = process.env.NEXTAUTH_URL || "http://localhost:3000"
     const domain = process.env.DOMAIN_NAME || "AI Platform"
+
+    console.log(`Invio email di benvenuto a ${email}`)
 
     const info = await transport.sendMail({
       from: `"${domain}" <${process.env.EMAIL_FROM || "noreply@example.com"}>`,
@@ -113,9 +128,7 @@ export async function sendWelcomeEmail(email: string, name: string) {
       `,
     })
 
-    if (process.env.NODE_ENV !== "production") {
-      console.log(`Email di benvenuto inviata: ${nodemailer.getTestMessageUrl(info)}`)
-    }
+    console.log(`Email di benvenuto inviata: ${nodemailer.getTestMessageUrl(info) || "Email inviata"}`)
 
     return info
   } catch (error) {
@@ -129,6 +142,8 @@ export async function sendSubscriptionEmail(email: string, name: string, plan: s
     const transport = await getTransporter()
     const baseUrl = process.env.NEXTAUTH_URL || "http://localhost:3000"
     const domain = process.env.DOMAIN_NAME || "AI Platform"
+
+    console.log(`Invio email di abbonamento a ${email} per il piano ${plan}`)
 
     const info = await transport.sendMail({
       from: `"${domain}" <${process.env.EMAIL_FROM || "noreply@example.com"}>`,
@@ -155,9 +170,7 @@ export async function sendSubscriptionEmail(email: string, name: string, plan: s
       `,
     })
 
-    if (process.env.NODE_ENV !== "production") {
-      console.log(`Email di abbonamento inviata: ${nodemailer.getTestMessageUrl(info)}`)
-    }
+    console.log(`Email di abbonamento inviata: ${nodemailer.getTestMessageUrl(info) || "Email inviata"}`)
 
     return info
   } catch (error) {
@@ -172,6 +185,8 @@ export async function sendPasswordResetEmail(email: string, token: string) {
     const baseUrl = process.env.NEXTAUTH_URL || "http://localhost:3000"
     const resetUrl = `${baseUrl}/reset-password?token=${token}`
     const domain = process.env.DOMAIN_NAME || "AI Platform"
+
+    console.log(`Invio email di reset password a ${email}`)
 
     const info = await transport.sendMail({
       from: `"${domain}" <${process.env.EMAIL_FROM || "noreply@example.com"}>`,
@@ -193,9 +208,7 @@ export async function sendPasswordResetEmail(email: string, token: string) {
       `,
     })
 
-    if (process.env.NODE_ENV !== "production") {
-      console.log(`Email di reset password inviata: ${nodemailer.getTestMessageUrl(info)}`)
-    }
+    console.log(`Email di reset password inviata: ${nodemailer.getTestMessageUrl(info) || "Email inviata"}`)
 
     return info
   } catch (error) {

@@ -35,7 +35,9 @@ export async function POST(req: NextRequest) {
     })
 
     // Invia email di benvenuto
-    await sendWelcomeEmail(user.email, user.name || "")
+    if (user.email && user.name) {
+      await sendWelcomeEmail(user.email, user.name)
+    }
 
     return NextResponse.json({ success: true })
   } catch (error) {

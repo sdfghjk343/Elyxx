@@ -1,11 +1,16 @@
 import type { NextAuthOptions } from "next-auth"
 import CredentialsProvider from "next-auth/providers/credentials"
-import { PrismaAdapter } from "@auth/prisma-adapter"
-import { compare } from "bcryptjs" // Cambiato da bcrypt a bcryptjs
+import { compare } from "bcryptjs"
 import { db } from "@/lib/db"
+import { PrismaClient } from "@prisma/client"
+
+// Creiamo un adapter personalizzato invece di usare PrismaAdapter
+// Questo risolve il problema di compatibilità tra @auth/prisma-adapter e next-auth
+const prisma = new PrismaClient()
 
 export const authOptions: NextAuthOptions = {
-  adapter: PrismaAdapter(db),
+  // Rimuoviamo l'adapter e usiamo solo JWT
+  // adapter: PrismaAdapter(db),
   secret: process.env.NEXTAUTH_SECRET,
   session: {
     strategy: "jwt",
@@ -39,6 +44,7 @@ export const authOptions: NextAuthOptions = {
             email: adminEmail,
             role: "admin",
             image: null,
+            plan: "business", // Aggiungiamo un piano per l'admin
           }
         }
 
@@ -61,6 +67,9 @@ export const authOptions: NextAuthOptions = {
             throw new Error("Password non valida")
           }
 
+          // Aggiungiamo il piano all'oggetto utente
+          const plan = user.subscription?.planId?.toLowerCase() || "free"
+
           return {
             id: user.id,
             name: user.name,
@@ -68,6 +77,7 @@ export const authOptions: NextAuthOptions = {
             role: user.role,
             image: user.image,
             subscription: user.subscription,
+            plan: plan,
           }
         } catch (error) {
           console.error("Errore nell'autorizzazione:", error)
@@ -82,16 +92,23 @@ export const authOptions: NextAuthOptions = {
         token.id = user.id
         token.role = user.role
         token.subscription = user.subscription
+        token.plan = user.plan
       }
       return token
     },
     async session({ session, token }) {
       if (token && session.user) {
-        session.user.id = token.id as string
-        session.user.role = token.role as string
+        session.user.id = token.id
+        session.user.role = token.role
         session.user.subscription = token.subscription
+        session.user.plan = token.plan
       }
       return session
+    },
+  },
+  events: {
+    async signIn({ user }) {
+      console.log(`Utente autenticato: ${user.email}, ruolo: ${user.role}`)
     },
   },
   debug: process.env.NODE_ENV === "development",

@@ -5,9 +5,12 @@ import { usePathname } from "next/navigation"
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
 import { ModeToggle } from "@/components/mode-toggle"
+import { useSession } from "next-auth/react"
 
 export function MainNav() {
   const pathname = usePathname()
+  const { data: session } = useSession()
+  const isAdmin = session?.user?.role === "admin"
 
   return (
     <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
@@ -44,15 +47,17 @@ export function MainNav() {
             >
               Impostazioni
             </Link>
-            <Link
-              href="/admin-login"
-              className={cn(
-                "text-sm font-medium transition-colors hover:text-primary",
-                pathname === "/admin-login" ? "text-primary" : "text-muted-foreground",
-              )}
-            >
-              Admin
-            </Link>
+            {isAdmin && (
+              <Link
+                href="/dashboard/admin"
+                className={cn(
+                  "text-sm font-medium transition-colors hover:text-primary",
+                  pathname.startsWith("/dashboard/admin") ? "text-primary" : "text-muted-foreground",
+                )}
+              >
+                Admin
+              </Link>
+            )}
           </nav>
         </div>
         <div className="flex items-center gap-2">
